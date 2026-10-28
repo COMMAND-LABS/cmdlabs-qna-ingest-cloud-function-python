@@ -103,7 +103,7 @@ Configuration is read from environment variables. In production they're injected
 - `PINECONE_API_KEY` - Pinecone API key
 - `PINECONE_ALL_MINILM_L6_V2_INDEX` - Default Pinecone index name
 - `KB_INGEST_SA` - Service account JSON (base64 encoded or raw JSON) for the default GCS client
-- `POSTGRES_URL` - PostgreSQL connection URL (for ingestion logging and per-account credentials)
+- `POSTGRES_URL` - PostgreSQL connection URL in `postgresql+psycopg://...` form (for ingestion logging and per-account credentials)
 - `CREDENTIALS_ENCRYPTION_KEY` - Fernet key for decrypting per-account credentials
 - `CREDENTIALS_ENCRYPTION_KEY_OLD` - *(optional)* comma-separated previous keys during key rotation; add `CREDENTIALS_ENCRYPTION_KEY_OLD=CREDENTIALS_ENCRYPTION_KEY_OLD:latest` to `--set-secrets` when needed
 

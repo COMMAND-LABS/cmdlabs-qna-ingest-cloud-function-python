@@ -56,6 +56,8 @@ def init_database():
         engine = create_engine(
             database_url,
             pool_pre_ping=True,  # Verify connections before using
+            # Supabase's transaction pooler (port 6543) doesn't support prepared statements
+            connect_args={"prepare_threshold": None},
             pool_size=5,
             max_overflow=10,
             echo=False  # Set to True for SQL query logging

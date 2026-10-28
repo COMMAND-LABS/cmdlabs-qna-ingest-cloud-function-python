@@ -11,8 +11,8 @@ dependencies = [
     "functions-framework>=3.5.0",
     "flask>=3.0.0",
     "sqlalchemy>=2.0.0",
-    "psycopg2-binary>=2.9.9",
     "cryptography>=42.0.0",
+    "psycopg[binary]>=3.1.0",
 ]
 
 [build-system]
