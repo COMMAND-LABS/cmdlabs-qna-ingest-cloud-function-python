@@ -26,3 +26,10 @@ gcloud functions deploy process-qna-ingest-topic-message-python \
 --max-instances=10 \
 --set-secrets=EMBEDDINGS_API_URL=EMBEDDINGS_API_URL:latest,PINECONE_API_KEY=PINECONE_API_KEY:latest,PINECONE_ALL_MINILM_L6_V2_INDEX=PINECONE_ALL_MINILM_L6_V2_INDEX:latest,KB_INGEST_SA=KB_INGEST_SA:latest,POSTGRES_URL=POSTGRES_URL:latest,CREDENTIALS_ENCRYPTION_KEY=CREDENTIALS_ENCRYPTION_KEY:latest
 ```
+
+#
+
+```sh
+gcloud beta run services logs tail process-qna-ingest-topic-message-python \
+  --region=us-east1 --project=command-labs
+```
