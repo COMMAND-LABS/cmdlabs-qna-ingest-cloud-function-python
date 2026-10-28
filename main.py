@@ -8,7 +8,6 @@ from typing import Dict, Any, Union
 from helpers.gcs import download_file_from_gcs, file_exists_in_gcs
 from helpers.csv_processor import process_csv_file, process_qna_pairs
 from helpers.pinecone import upsert_vectors, pinecone_api_key_for_account, ProcessingResult
-from helpers.get_secret import get_secret
 from helpers.db_logger import VectorDbLogger
 from clients.gcs_client_factory import cloud_storage_client_for_account
 from db.enums import OperationType, OperationStatus
@@ -53,23 +52,6 @@ def process_qna_ingest_topic_message(req_or_event: Union[Dict[str, Any], Any], c
     logger.info("===== QnA ingest function INVOKED =====")
 
     try:
-        # Load secrets (with error handling in case Secret Manager is not accessible during import)
-        try:
-            EnvironmentVariables.EMBEDDINGS_API_URL = get_secret("EMBEDDINGS_API_URL")
-            EnvironmentVariables.PINECONE_API_KEY = get_secret("PINECONE_API_KEY")
-            EnvironmentVariables.PINECONE_ALL_MINILM_L6_V2_INDEX = get_secret("PINECONE_ALL_MINILM_L6_V2_INDEX")
-            EnvironmentVariables.KB_INGEST_SA = get_secret("KB_INGEST_SA")
-        except Exception as secret_error:
-            logger.warning(f"Failed to load secrets during function execution: {secret_error}")
-            # Try to load again (secrets might not be available during import but available at runtime)
-            try:
-                EnvironmentVariables.EMBEDDINGS_API_URL = get_secret("EMBEDDINGS_API_URL")
-                EnvironmentVariables.PINECONE_API_KEY = get_secret("PINECONE_API_KEY")
-                EnvironmentVariables.PINECONE_ALL_MINILM_L6_V2_INDEX = get_secret("PINECONE_ALL_MINILM_L6_V2_INDEX")
-                EnvironmentVariables.KB_INGEST_SA = get_secret("KB_INGEST_SA")
-            except Exception:
-                raise Exception(f"Failed to load required secrets: {secret_error}")
-        
         # Detect if triggered via HTTP or Pub/Sub (matching Node.js implementation)
         if hasattr(req_or_event, 'get_json') or (isinstance(req_or_event, dict) and 'body' in req_or_event):
             # HTTP-triggered (local testing with curl)

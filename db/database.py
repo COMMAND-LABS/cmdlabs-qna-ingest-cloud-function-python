@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
-from helpers.get_secret import get_secret
+from singletons.environment_variables import EnvironmentVariables
 
 logger = logging.getLogger(__name__)
 
@@ -20,31 +20,14 @@ engine = None
 
 def get_database_url() -> str:
     """
-    Get database URL from Secret Manager or environment variable.
-    
+    Get database URL from the POSTGRES_URL environment variable.
+
     Returns:
         Database connection URL string
     """
-    try:
-        # Try to get from Secret Manager first
-        logger.info("Attempting to get POSTGRES_URL from Secret Manager...")
-        db_url = get_secret("POSTGRES_URL")
-        if db_url:
-            logger.info(f"✅ Retrieved POSTGRES_URL from Secret Manager (length: {len(db_url)})")
-            return db_url
-    except Exception as e:
-        logger.warning(f"⚠️  Failed to get POSTGRES_URL from Secret Manager: {e}")
-    
-    # Fallback to environment variable (for local development)
-    import os
-    db_url = os.getenv("POSTGRES_URL")
-    if db_url:
-        logger.info(f"✅ Using POSTGRES_URL from environment variable (length: {len(db_url)})")
-        return db_url
-    
-    error_msg = "POSTGRES_URL not found in Secret Manager or environment variables"
-    logger.error(f"❌ {error_msg}")
-    raise ValueError(error_msg)
+    if not EnvironmentVariables.POSTGRES_URL:
+        raise ValueError("POSTGRES_URL environment variable is not set")
+    return EnvironmentVariables.POSTGRES_URL
 
 
 def init_database():

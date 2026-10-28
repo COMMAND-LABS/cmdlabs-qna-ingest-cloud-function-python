@@ -28,3 +28,8 @@ htmlcov/
 README.md
 READMEs/
 
+
+# Local secrets
+.env
+.env.example
+*-sa-key.json

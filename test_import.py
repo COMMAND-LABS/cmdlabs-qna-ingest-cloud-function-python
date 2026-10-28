@@ -8,10 +8,10 @@ try:
     print("✓ main.py imported successfully")
     print(f"✓ Function found: {process_qna_ingest_topic_message.__name__}")
     
-    from helpers import gcs, csv_processor, embedding, get_secret, pinecone
+    from helpers import gcs, csv_processor, embedding, pinecone
     print("✓ All helper modules imported successfully")
-    
-    from clients import gcs_client_factory, secret_manager_client
+
+    from clients import gcs_client_factory
     print("✓ All client modules imported successfully")
     
     from singletons import environment_variables

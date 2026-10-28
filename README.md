@@ -25,15 +25,18 @@ Note: `requirements.txt` is maintained for Google Cloud Functions deployment com
 
 The function automatically detects HTTP vs Pub/Sub triggers (matching the Node.js implementation).
 
+Configuration is read from environment variables (see [Required Secrets](#required-secrets)). Copy `.env.example` to `.env` and fill it in.
+
 **Using UV:**
 
 ```sh
-uv run functions-framework --target=process_qna_ingest_topic_message --source=main.py
+uv run --env-file .env functions-framework --target=process_qna_ingest_topic_message --source=main.py
 ```
 
 **Using pip:**
 
 ```sh
+set -a && source .env && set +a
 functions-framework --target=process_qna_ingest_topic_message --source=main.py
 ```
 
@@ -51,6 +54,7 @@ Create a Pub/Sub topic named `qna-ingest-topic` in your GCP project.
 
 # Then deploy the function
 gcloud functions deploy process-qna-ingest-topic-message-python \
+--project=command-labs \
 --gen2 \
 --runtime=python312 \
 --region=us-east1 \
@@ -59,7 +63,8 @@ gcloud functions deploy process-qna-ingest-topic-message-python \
 --trigger-topic=qna-ingest-topic \
 --memory=1GB \
 --timeout=540s \
---max-instances=10
+--max-instances=10 \
+--set-secrets=EMBEDDINGS_API_URL=EMBEDDINGS_API_URL:latest,PINECONE_API_KEY=PINECONE_API_KEY:latest,PINECONE_ALL_MINILM_L6_V2_INDEX=PINECONE_ALL_MINILM_L6_V2_INDEX:latest,KB_INGEST_SA=KB_INGEST_SA:latest,POSTGRES_URL=POSTGRES_URL:latest,CREDENTIALS_ENCRYPTION_KEY=CREDENTIALS_ENCRYPTION_KEY:latest
 ```
 
 ## cURL for testing the Cloud Function locally (that will eventually act as the subscriber of a Pub/Sub topic)
@@ -92,15 +97,17 @@ gcloud functions logs read process-qna-ingest-topic-message --region=us-east1 --
 
 ## Required Secrets
 
-The following secrets must be configured in Google Secret Manager:
+Configuration is read from environment variables. In production they're injected from Google Secret Manager at deploy time by the `--set-secrets` flag above, so each one must exist as a secret in the function's project:
 
 - `EMBEDDINGS_API_URL` - URL of the embeddings API service
 - `PINECONE_API_KEY` - Pinecone API key
-- `PINECONE_ALL_MINILM_L6_V2_INDEX` - Name of the Pinecone index
-- `KB_INGEST_SA` - Service account JSON (base64 encoded or file path)
-- `POSTGRES_URL` - PostgreSQL database connection URL (for VectorDB ingestion logging)
+- `PINECONE_ALL_MINILM_L6_V2_INDEX` - Default Pinecone index name
+- `KB_INGEST_SA` - Service account JSON (base64 encoded or raw JSON) for the default GCS client
+- `POSTGRES_URL` - PostgreSQL connection URL (for ingestion logging and per-account credentials)
+- `CREDENTIALS_ENCRYPTION_KEY` - Fernet key for decrypting per-account credentials
+- `CREDENTIALS_ENCRYPTION_KEY_OLD` - *(optional)* comma-separated previous keys during key rotation; add `CREDENTIALS_ENCRYPTION_KEY_OLD=CREDENTIALS_ENCRYPTION_KEY_OLD:latest` to `--set-secrets` when needed
 
-**Note:** The `POSTGRES_URL` secret is required for database logging. If not configured, ingestion will still work but won't log to the database. Check Cloud Function logs for database connection errors.
+The function's runtime service account needs `roles/secretmanager.secretAccessor`. Secrets are read when an instance starts, so after rotating a secret, redeploy (or wait for new instances) to pick it up.
 
 ## Project Structure
 
@@ -112,11 +119,9 @@ The following secrets must be configured in Google Secret Manager:
 │   ├── csv_processor.py   # CSV parsing and processing
 │   ├── embedding.py       # Embedding API client
 │   ├── gcs.py             # Google Cloud Storage helpers
-│   ├── get_secret.py      # Secret Manager helpers
 │   └── pinecone.py        # Pinecone client helpers
 ├── clients/               # Client factories
-│   ├── gcs_client_factory.py
-│   └── secret_manager_client.py
+│   └── gcs_client_factory.py
 └── singletons/            # Singleton modules
-    └── environment_variables.py
+    └── environment_variables.py  # All config, read from env vars
 ```
